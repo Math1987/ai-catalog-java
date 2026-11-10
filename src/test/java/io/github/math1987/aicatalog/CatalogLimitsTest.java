@@ -26,6 +26,28 @@ class CatalogLimitsTest {
     }
 
     @Test
+    void usesConfiguredDepthForInlineDataAndDocumentSerialization() {
+        var codec = codec(100_000, 600, 10_000, 128, 10_000);
+        String data = "[".repeat(550) + "0" + "]".repeat(550);
+        String source = CatalogJsonTest.catalog(data);
+        var document = codec.read(source);
+        assertEquals(data, document.entries().get(0).dataJson().orElseThrow());
+        assertEquals(source, codec.write(document));
+        assertEquals(source, codec.write(codec.read(codec.write(document))));
+        limited(() -> new CatalogJson().write(document));
+    }
+
+    @Test
+    void usesConfiguredDepthForRetainedUnknownValues() {
+        var codec = codec(100_000, 600, 10_000, 128, 10_000);
+        String source = "{\"specVersion\":\"1.0\",\"entries\":[],\"future\":"
+                + "[".repeat(550) + "0" + "]".repeat(550) + "}";
+        var document = codec.read(source);
+        assertEquals(source, codec.write(document));
+        limited(() -> new CatalogJson().write(document));
+    }
+
+    @Test
     void limitsStringValues() {
         var codec = codec(100_000, 64, 32, 128, 10_000);
         limited(() -> codec.read(CatalogJsonTest.catalog("\"" + "x".repeat(10_000) + "\"")));

@@ -90,6 +90,69 @@ class CatalogJsonTest {
         assertThrows(CatalogParseException.class, () -> codec.read("\ud800"));
     }
 
+    @ParameterizedTest
+    @ValueSource(strings = {"\\ud800", "\\udfff", "\\ud800x", "\\ud800\\ud800",
+            "\\udfff\\ud800", "\\ud800\\udfff\\ud800"})
+    void rejectsUnpairedSurrogateEscapesThroughoutTheDocument(String escaped) {
+        String quoted = "\"" + escaped + "\"";
+        String[] inputs = {
+                catalog(quoted),
+                catalog("{\"future\":[" + quoted + "]}"),
+                catalog("{" + quoted + ":null}"),
+                "{\"specVersion\":\"1.0\",\"entries\":[],\"future\":{\"nested\":[" + quoted + "]}}",
+                "{\"specVersion\":\"1.0\",\"entries\":[{\"identifier\":" + quoted
+                        + ",\"type\":\"custom\",\"data\":null}]}",
+                "{\"specVersion\":\"1.0\",\"entries\":[{\"identifier\":\"x\",\"type\":"
+                        + quoted + ",\"data\":null}]}",
+                "{\"specVersion\":\"1.0\",\"entries\":[{\"identifier\":\"x\",\"type\":\"custom\",\"url\":"
+                        + quoted + "}]}"
+        };
+        for (String input : inputs) {
+            var error = assertThrows(CatalogParseException.class, () -> codec.read(input));
+            assertEquals(CatalogParseException.Code.INVALID_JSON, error.code());
+            assertEquals("", error.pointer());
+            assertFalse(error.getMessage().contains(escaped));
+            assertNull(error.getCause());
+            var bytesError = assertThrows(CatalogParseException.class,
+                    () -> codec.read(input.getBytes(StandardCharsets.UTF_8)));
+            assertEquals(error.code(), bytesError.code());
+        }
+    }
+
+    @Test
+    void preservesPairedSurrogateEscapesInNamesAndValues() {
+        var document = codec.read(catalog("{\"\\ud800\\udfff\":\"\\ud83c\\udf0d\"}"));
+        String written = codec.write(document);
+        assertEquals("{\"\ud800\udfff\":\"\ud83c\udf0d\"}", document.entries().get(0).dataJson().orElseThrow());
+        assertEquals(written, codec.write(codec.read(written)));
+        assertEquals(written, codec.write(codec.read(written.getBytes(StandardCharsets.UTF_8))));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"1e2147483648", "1e-2147483648", "0e2147483648",
+            "0.000000000000000001e-2147483647"})
+    void reportsUnsupportedNumericRangesWithoutLeakingInput(String number) {
+        String source = catalog(number);
+        var error = assertThrows(CatalogParseException.class, () -> codec.read(source));
+        assertEquals(CatalogParseException.Code.INPUT_LIMIT_EXCEEDED, error.code());
+        assertEquals("", error.pointer());
+        assertFalse(error.getMessage().contains(number));
+        assertNull(error.getCause());
+        var bytesError = assertThrows(CatalogParseException.class,
+                () -> codec.read(source.getBytes(StandardCharsets.UTF_8)));
+        assertEquals(error.code(), bytesError.code());
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"1e400", "-1e400", "1e-400", "1e2147483647",
+            "1e-2147483647", "10e2147483647"})
+    void preservesRepresentableExtremeNumbers(String number) {
+        var document = codec.read(catalog(number));
+        String inline = document.entries().get(0).dataJson().orElseThrow();
+        assertEquals(0, new BigDecimal(number).compareTo(json.readTree(inline).decimalValue()));
+        assertEquals(inline, codec.read(codec.write(document)).entries().get(0).dataJson().orElseThrow());
+    }
+
     @Test
     void doesNotExposeInputInSyntaxErrors() {
         String secret = "sensitive_value_never_echo";

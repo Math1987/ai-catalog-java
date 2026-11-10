@@ -4,12 +4,14 @@ import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.CharacterCodingException;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Objects;
 import java.util.regex.Pattern;
 import tools.jackson.core.JacksonException;
 import tools.jackson.core.StreamReadConstraints;
 import tools.jackson.core.StreamReadFeature;
+import tools.jackson.core.StreamWriteConstraints;
 import tools.jackson.core.exc.StreamConstraintsException;
 import tools.jackson.core.json.JsonFactory;
 import tools.jackson.databind.DeserializationFeature;
@@ -58,6 +60,9 @@ public final class CatalogJson {
                         .maxNumberLength(limits.maxNumberLength())
                         .maxTokenCount(limits.maxTokens())
                         .build())
+                .streamWriteConstraints(StreamWriteConstraints.builder()
+                        .maxNestingDepth(limits.maxNestingDepth())
+                        .build())
                 .build();
         mapper = JsonMapper.builder(factory)
                 .enable(DeserializationFeature.FAIL_ON_TRAILING_TOKENS)
@@ -92,7 +97,16 @@ public final class CatalogJson {
 
     /** Preserves JSON values and member presence, not whitespace or numeric spelling. */
     public String write(CatalogDocument document) {
-        return mapper.writeValueAsString(Objects.requireNonNull(document, "document").root());
+        return serialize(Objects.requireNonNull(document, "document").root());
+    }
+
+    private String serialize(JsonNode value) {
+        try {
+            return mapper.writeValueAsString(value);
+        } catch (StreamConstraintsException e) {
+            throw new CatalogParseException(CatalogParseException.Code.INPUT_LIMIT_EXCEEDED,
+                    "", "JSON exceeds configured processing limits.");
+        }
     }
 
     private CatalogDocument parse(String json) {
@@ -102,6 +116,9 @@ public final class CatalogJson {
         } catch (StreamConstraintsException e) {
             throw new CatalogParseException(CatalogParseException.Code.INPUT_LIMIT_EXCEEDED,
                     "", "JSON exceeds configured processing limits.");
+        } catch (NumberFormatException e) {
+            throw new CatalogParseException(CatalogParseException.Code.INPUT_LIMIT_EXCEEDED,
+                    "", "JSON number exceeds the supported numeric range.");
         } catch (JacksonException e) {
             var location = e.getLocation();
             String where = location == null ? "" : " at line " + location.getLineNr()
@@ -112,6 +129,7 @@ public final class CatalogJson {
         if (root == null || root.isMissingNode()) {
             throw new CatalogParseException(CatalogParseException.Code.INVALID_JSON, "", "JSON is empty.");
         }
+        validateUnicode(root);
         require(root.isObject(), "", "Catalog must be an object.");
         String version = string(root, "specVersion", "");
         var match = SPEC_VERSION.matcher(version);
@@ -133,10 +151,46 @@ public final class CatalogJson {
             boolean hasData = item.has("data");
             require(hasUrl != hasData, path, "Entry must contain exactly one of url or data.");
             String url = hasUrl ? string(item, "url", path) : null;
-            String data = hasData ? mapper.writeValueAsString(item.get("data")) : null;
+            String data = hasData ? serialize(item.get("data")) : null;
             entries.add(new CatalogEntry(identifier, type, url, data));
         }
         return new CatalogDocument((ObjectNode) root, entries);
+    }
+
+    private static void validateUnicode(JsonNode root) {
+        var pending = new ArrayDeque<JsonNode>();
+        pending.add(root);
+        while (!pending.isEmpty()) {
+            JsonNode value = pending.removeLast();
+            if (value.isString()) {
+                validateUnicode(value.asString());
+            } else if (value.isObject()) {
+                for (var property : value.properties()) {
+                    validateUnicode(property.getKey());
+                    pending.add(property.getValue());
+                }
+            } else if (value.isArray()) {
+                for (JsonNode element : value) {
+                    pending.add(element);
+                }
+            }
+        }
+    }
+
+    private static void validateUnicode(String value) {
+        for (int i = 0; i < value.length(); i++) {
+            char current = value.charAt(i);
+            if (Character.isHighSurrogate(current)) {
+                if (i + 1 < value.length() && Character.isLowSurrogate(value.charAt(i + 1))) {
+                    i++;
+                    continue;
+                }
+            } else if (!Character.isLowSurrogate(current)) {
+                continue;
+            }
+            throw new CatalogParseException(CatalogParseException.Code.INVALID_JSON,
+                    "", "JSON strings must contain valid Unicode scalar values.");
+        }
     }
 
     private static String string(JsonNode object, String field, String path) {
