@@ -1,0 +1,476 @@
+{
+  "description": "Recorded Rust core parsing, serialization and field-access observations. Maven tests replay these snapshots; they do not execute Rust or assert validation, signature validity, or complete SDK parity.",
+  "recordedAt": "2026-11-10",
+  "rustReference": {
+    "repository": "https://github.com/Agent-Card/ai-catalog-rust",
+    "revision": "920ef70e1e5a602e142137f9ea6a1135fedbf110",
+    "crate": "ai-catalog",
+    "version": "0.4.0",
+    "stage": "core deserialize/serialize and field access; validation is excluded"
+  },
+  "serdeJson": {
+    "version": "1.0.154",
+    "features": [
+      "default",
+      "std"
+    ],
+    "arbitrary_precision": false,
+    "preserve_order": false
+  },
+  "selection": "20 cases accepted by both implementations with equal semantic round trips and core accessor values in the review. Non-matching cases, including inline null, are outside this parity subset.",
+  "attribution": [
+    {
+      "scope": "Cases named rust-fixture-*",
+      "source": "https://github.com/Agent-Card/ai-catalog-rust/tree/920ef70e1e5a602e142137f9ea6a1135fedbf110/fixtures",
+      "copyright": [
+        "Copyright AI-Catalog Contributors (https://github.com/Agent-Card/ai-catalog-rust)",
+        "Copyright AGNTCY Contributors (https://github.com/agntcy)"
+      ],
+      "license": "Apache-2.0",
+      "licenseUrl": "https://github.com/Agent-Card/ai-catalog-rust/blob/920ef70e1e5a602e142137f9ea6a1135fedbf110/LICENSE",
+      "changes": "Input fixture text copied unchanged; Rust output and accessor snapshots recorded separately."
+    },
+    {
+      "scope": "Specification example underlying rust-fixture-spec-example",
+      "source": "https://github.com/Agent-Card/ai-catalog/blob/9aac2c1bfa622356e45a31f3dc1d342bdb329e00/specification/ai-catalog.md",
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://github.com/Agent-Card/ai-catalog/blob/9aac2c1bfa622356e45a31f3dc1d342bdb329e00/LICENSE.md"
+    },
+    {
+      "scope": "Other input cases and test harness",
+      "source": "https://github.com/Math1987/ai-catalog-java",
+      "license": "Apache-2.0"
+    }
+  ],
+  "cases": [
+    {
+      "name": "java-empty catalog",
+      "source": "{\"specVersion\":\"1.0\",\"entries\":[]}",
+      "rust": {
+        "entries": [],
+        "parse_ok": true,
+        "parse_slice_equivalent": true,
+        "roundtrip_json": "{\"specVersion\":\"1.0\",\"entries\":[]}",
+        "second_roundtrip_equal": true,
+        "spec_version": "1.0"
+      }
+    },
+    {
+      "name": "java-higher minor",
+      "source": "{\"specVersion\":\"1.99\",\"entries\":[]}",
+      "rust": {
+        "entries": [],
+        "parse_ok": true,
+        "parse_slice_equivalent": true,
+        "roundtrip_json": "{\"specVersion\":\"1.99\",\"entries\":[]}",
+        "second_roundtrip_equal": true,
+        "spec_version": "1.99"
+      }
+    },
+    {
+      "name": "java-relative URL",
+      "source": "{\"specVersion\":\"1.0\",\"entries\":[{\"identifier\":\"x\",\"type\":\"custom\",\"url\":\"./artifact.json\"}]}",
+      "rust": {
+        "entries": [
+          {
+            "data_json": null,
+            "identifier": "x",
+            "type": "custom",
+            "url": "./artifact.json"
+          }
+        ],
+        "parse_ok": true,
+        "parse_slice_equivalent": true,
+        "roundtrip_json": "{\"specVersion\":\"1.0\",\"entries\":[{\"identifier\":\"x\",\"type\":\"custom\",\"url\":\"./artifact.json\"}]}",
+        "second_roundtrip_equal": true,
+        "spec_version": "1.0"
+      }
+    },
+    {
+      "name": "version-01.000",
+      "source": "{\"specVersion\":\"01.000\",\"entries\":[]}",
+      "rust": {
+        "entries": [],
+        "parse_ok": true,
+        "parse_slice_equivalent": true,
+        "roundtrip_json": "{\"specVersion\":\"01.000\",\"entries\":[]}",
+        "second_roundtrip_equal": true,
+        "spec_version": "01.000"
+      }
+    },
+    {
+      "name": "unknown-members",
+      "source": "{\"specVersion\":\"1.0\",\"futureRoot\":{\"n\":1},\"entries\":[{\"identifier\":\"urn:test:x\",\"type\":\"custom\",\"data\":{},\"futureEntry\":true}]}",
+      "rust": {
+        "entries": [
+          {
+            "data_json": "{}",
+            "identifier": "urn:test:x",
+            "type": "custom",
+            "url": null
+          }
+        ],
+        "parse_ok": true,
+        "parse_slice_equivalent": true,
+        "roundtrip_json": "{\"specVersion\":\"1.0\",\"entries\":[{\"identifier\":\"urn:test:x\",\"type\":\"custom\",\"data\":{},\"futureEntry\":true}],\"futureRoot\":{\"n\":1}}",
+        "second_roundtrip_equal": true,
+        "spec_version": "1.0"
+      }
+    },
+    {
+      "name": "data-bool",
+      "source": "{\"specVersion\":\"1.0\",\"entries\":[{\"identifier\":\"urn:test:x\",\"type\":\"custom\",\"data\":false}]}",
+      "rust": {
+        "entries": [
+          {
+            "data_json": "false",
+            "identifier": "urn:test:x",
+            "type": "custom",
+            "url": null
+          }
+        ],
+        "parse_ok": true,
+        "parse_slice_equivalent": true,
+        "roundtrip_json": "{\"specVersion\":\"1.0\",\"entries\":[{\"identifier\":\"urn:test:x\",\"type\":\"custom\",\"data\":false}]}",
+        "second_roundtrip_equal": true,
+        "spec_version": "1.0"
+      }
+    },
+    {
+      "name": "data-int",
+      "source": "{\"specVersion\":\"1.0\",\"entries\":[{\"identifier\":\"urn:test:x\",\"type\":\"custom\",\"data\":0}]}",
+      "rust": {
+        "entries": [
+          {
+            "data_json": "0",
+            "identifier": "urn:test:x",
+            "type": "custom",
+            "url": null
+          }
+        ],
+        "parse_ok": true,
+        "parse_slice_equivalent": true,
+        "roundtrip_json": "{\"specVersion\":\"1.0\",\"entries\":[{\"identifier\":\"urn:test:x\",\"type\":\"custom\",\"data\":0}]}",
+        "second_roundtrip_equal": true,
+        "spec_version": "1.0"
+      }
+    },
+    {
+      "name": "data-str",
+      "source": "{\"specVersion\":\"1.0\",\"entries\":[{\"identifier\":\"urn:test:x\",\"type\":\"custom\",\"data\":\"value\"}]}",
+      "rust": {
+        "entries": [
+          {
+            "data_json": "\"value\"",
+            "identifier": "urn:test:x",
+            "type": "custom",
+            "url": null
+          }
+        ],
+        "parse_ok": true,
+        "parse_slice_equivalent": true,
+        "roundtrip_json": "{\"specVersion\":\"1.0\",\"entries\":[{\"identifier\":\"urn:test:x\",\"type\":\"custom\",\"data\":\"value\"}]}",
+        "second_roundtrip_equal": true,
+        "spec_version": "1.0"
+      }
+    },
+    {
+      "name": "data-list",
+      "source": "{\"specVersion\":\"1.0\",\"entries\":[{\"identifier\":\"urn:test:x\",\"type\":\"custom\",\"data\":[]}]}",
+      "rust": {
+        "entries": [
+          {
+            "data_json": "[]",
+            "identifier": "urn:test:x",
+            "type": "custom",
+            "url": null
+          }
+        ],
+        "parse_ok": true,
+        "parse_slice_equivalent": true,
+        "roundtrip_json": "{\"specVersion\":\"1.0\",\"entries\":[{\"identifier\":\"urn:test:x\",\"type\":\"custom\",\"data\":[]}]}",
+        "second_roundtrip_equal": true,
+        "spec_version": "1.0"
+      }
+    },
+    {
+      "name": "data-dict",
+      "source": "{\"specVersion\":\"1.0\",\"entries\":[{\"identifier\":\"urn:test:x\",\"type\":\"custom\",\"data\":{}}]}",
+      "rust": {
+        "entries": [
+          {
+            "data_json": "{}",
+            "identifier": "urn:test:x",
+            "type": "custom",
+            "url": null
+          }
+        ],
+        "parse_ok": true,
+        "parse_slice_equivalent": true,
+        "roundtrip_json": "{\"specVersion\":\"1.0\",\"entries\":[{\"identifier\":\"urn:test:x\",\"type\":\"custom\",\"data\":{}}]}",
+        "second_roundtrip_equal": true,
+        "spec_version": "1.0"
+      }
+    },
+    {
+      "name": "unicode-literal",
+      "source": "{\"specVersion\":\"1.0\",\"entries\":[{\"identifier\":\"x\",\"type\":\"custom\",\"data\":\"café 🌍\"}]}",
+      "rust": {
+        "entries": [
+          {
+            "data_json": "\"café 🌍\"",
+            "identifier": "x",
+            "type": "custom",
+            "url": null
+          }
+        ],
+        "parse_ok": true,
+        "parse_slice_equivalent": true,
+        "roundtrip_json": "{\"specVersion\":\"1.0\",\"entries\":[{\"identifier\":\"x\",\"type\":\"custom\",\"data\":\"café 🌍\"}]}",
+        "second_roundtrip_equal": true,
+        "spec_version": "1.0"
+      }
+    },
+    {
+      "name": "unicode-pair",
+      "source": "{\"specVersion\":\"1.0\",\"entries\":[{\"identifier\":\"x\",\"type\":\"custom\",\"data\":\"\\ud83c\\udf0d\"}]}",
+      "rust": {
+        "entries": [
+          {
+            "data_json": "\"🌍\"",
+            "identifier": "x",
+            "type": "custom",
+            "url": null
+          }
+        ],
+        "parse_ok": true,
+        "parse_slice_equivalent": true,
+        "roundtrip_json": "{\"specVersion\":\"1.0\",\"entries\":[{\"identifier\":\"x\",\"type\":\"custom\",\"data\":\"🌍\"}]}",
+        "second_roundtrip_equal": true,
+        "spec_version": "1.0"
+      }
+    },
+    {
+      "name": "unicode-null-control",
+      "source": "{\"specVersion\":\"1.0\",\"entries\":[{\"identifier\":\"x\",\"type\":\"custom\",\"data\":\"\\u0000\\n\\t\"}]}",
+      "rust": {
+        "entries": [
+          {
+            "data_json": "\"\\u0000\\n\\t\"",
+            "identifier": "x",
+            "type": "custom",
+            "url": null
+          }
+        ],
+        "parse_ok": true,
+        "parse_slice_equivalent": true,
+        "roundtrip_json": "{\"specVersion\":\"1.0\",\"entries\":[{\"identifier\":\"x\",\"type\":\"custom\",\"data\":\"\\u0000\\n\\t\"}]}",
+        "second_roundtrip_equal": true,
+        "spec_version": "1.0"
+      }
+    },
+    {
+      "name": "entry-order",
+      "source": "{\"specVersion\":\"1.0\",\"entries\":[{\"identifier\":\"B\",\"type\":\"custom\",\"url\":\"../b\"},{\"identifier\":\"A\",\"type\":\"custom\",\"data\":false}]}",
+      "rust": {
+        "entries": [
+          {
+            "data_json": null,
+            "identifier": "B",
+            "type": "custom",
+            "url": "../b"
+          },
+          {
+            "data_json": "false",
+            "identifier": "A",
+            "type": "custom",
+            "url": null
+          }
+        ],
+        "parse_ok": true,
+        "parse_slice_equivalent": true,
+        "roundtrip_json": "{\"specVersion\":\"1.0\",\"entries\":[{\"identifier\":\"B\",\"type\":\"custom\",\"url\":\"../b\"},{\"identifier\":\"A\",\"type\":\"custom\",\"data\":false}]}",
+        "second_roundtrip_equal": true,
+        "spec_version": "1.0"
+      }
+    },
+    {
+      "name": "number-9007199254740993",
+      "source": "{\"specVersion\":\"1.0\",\"entries\":[{\"identifier\":\"x\",\"type\":\"custom\",\"data\":9007199254740993}]}",
+      "rust": {
+        "entries": [
+          {
+            "data_json": "9007199254740993",
+            "identifier": "x",
+            "type": "custom",
+            "url": null
+          }
+        ],
+        "parse_ok": true,
+        "parse_slice_equivalent": true,
+        "roundtrip_json": "{\"specVersion\":\"1.0\",\"entries\":[{\"identifier\":\"x\",\"type\":\"custom\",\"data\":9007199254740993}]}",
+        "second_roundtrip_equal": true,
+        "spec_version": "1.0"
+      }
+    },
+    {
+      "name": "rust-fixture-minimal",
+      "source": "{\n  \"specVersion\": \"1.0\",\n  \"entries\": [\n    {\n      \"identifier\": \"urn:example:minimal\",\n      \"displayName\": \"Minimal\",\n      \"type\": \"application/json\",\n      \"url\": \"https://example.com/minimal.json\"\n    }\n  ]\n}\n",
+      "sourceUrl": "https://github.com/Agent-Card/ai-catalog-rust/blob/920ef70e1e5a602e142137f9ea6a1135fedbf110/fixtures/minimal.json",
+      "rust": {
+        "entries": [
+          {
+            "data_json": null,
+            "identifier": "urn:example:minimal",
+            "type": "application/json",
+            "url": "https://example.com/minimal.json"
+          }
+        ],
+        "parse_ok": true,
+        "parse_slice_equivalent": true,
+        "roundtrip_json": "{\"specVersion\":\"1.0\",\"entries\":[{\"identifier\":\"urn:example:minimal\",\"displayName\":\"Minimal\",\"type\":\"application/json\",\"url\":\"https://example.com/minimal.json\"}]}",
+        "second_roundtrip_equal": true,
+        "spec_version": "1.0"
+      }
+    },
+    {
+      "name": "rust-fixture-future_member",
+      "source": "{\n  \"specVersion\": \"1.0\",\n  \"entries\": [],\n  \"futureMember\": {\n    \"a\": 1\n  }\n}\n",
+      "sourceUrl": "https://github.com/Agent-Card/ai-catalog-rust/blob/920ef70e1e5a602e142137f9ea6a1135fedbf110/fixtures/future_member.json",
+      "rust": {
+        "entries": [],
+        "parse_ok": true,
+        "parse_slice_equivalent": true,
+        "roundtrip_json": "{\"specVersion\":\"1.0\",\"entries\":[],\"futureMember\":{\"a\":1}}",
+        "second_roundtrip_equal": true,
+        "spec_version": "1.0"
+      }
+    },
+    {
+      "name": "rust-fixture-spec-example",
+      "source": "{\n  \"specVersion\": \"1.0\",\n  \"host\": {\n    \"displayName\": \"Acme Services Inc.\",\n    \"identifier\": \"did:example:org-acme-corp\",\n    \"documentationUrl\": \"https://docs.acme-corp.com/agents\"\n  },\n  \"entries\": [\n    {\n      \"identifier\": \"urn:example:agent-finance-001\",\n      \"displayName\": \"Acme Finance Agent\",\n      \"type\": \"application/a2a-agent-card+json\",\n      \"description\": \"Multi-protocol finance agent.\",\n      \"tags\": [\n        \"finance\",\n        \"trading\"\n      ],\n      \"url\": \"https://api.acme-corp.com/agents/acme-finance-agent.json\",\n      \"updatedAt\": \"2026-02-22T16:30:00Z\"\n    },\n    {\n      \"identifier\": \"urn:example:data:market-dataset-2026q1\",\n      \"displayName\": \"Market Dataset Q1 2026\",\n      \"type\": \"application/parquet\",\n      \"description\": \"Artifact-focused card for training and evaluation.\",\n      \"tags\": [\n        \"dataset\",\n        \"finance\"\n      ],\n      \"url\": \"https://data.acme-corp.com/datasets/market-dataset-2026q1.parquet\",\n      \"updatedAt\": \"2026-02-22T16:00:00Z\"\n    }\n  ]\n}\n",
+      "sourceUrl": "https://github.com/Agent-Card/ai-catalog-rust/blob/920ef70e1e5a602e142137f9ea6a1135fedbf110/fixtures/spec-example.json",
+      "rust": {
+        "entries": [
+          {
+            "data_json": null,
+            "identifier": "urn:example:agent-finance-001",
+            "type": "application/a2a-agent-card+json",
+            "url": "https://api.acme-corp.com/agents/acme-finance-agent.json"
+          },
+          {
+            "data_json": null,
+            "identifier": "urn:example:data:market-dataset-2026q1",
+            "type": "application/parquet",
+            "url": "https://data.acme-corp.com/datasets/market-dataset-2026q1.parquet"
+          }
+        ],
+        "parse_ok": true,
+        "parse_slice_equivalent": true,
+        "roundtrip_json": "{\"specVersion\":\"1.0\",\"host\":{\"displayName\":\"Acme Services Inc.\",\"identifier\":\"did:example:org-acme-corp\",\"documentationUrl\":\"https://docs.acme-corp.com/agents\"},\"entries\":[{\"identifier\":\"urn:example:agent-finance-001\",\"displayName\":\"Acme Finance Agent\",\"type\":\"application/a2a-agent-card+json\",\"url\":\"https://api.acme-corp.com/agents/acme-finance-agent.json\",\"description\":\"Multi-protocol finance agent.\",\"tags\":[\"finance\",\"trading\"],\"updatedAt\":\"2026-02-22T16:30:00Z\"},{\"identifier\":\"urn:example:data:market-dataset-2026q1\",\"displayName\":\"Market Dataset Q1 2026\",\"type\":\"application/parquet\",\"url\":\"https://data.acme-corp.com/datasets/market-dataset-2026q1.parquet\",\"description\":\"Artifact-focused card for training and evaluation.\",\"tags\":[\"dataset\",\"finance\"],\"updatedAt\":\"2026-02-22T16:00:00Z\"}]}",
+        "second_roundtrip_equal": true,
+        "spec_version": "1.0"
+      }
+    },
+    {
+      "name": "rust-fixture-discoverable",
+      "source": "{\n  \"specVersion\": \"1.0\",\n  \"host\": {\n    \"displayName\": \"Example Host\"\n  },\n  \"entries\": [\n    {\n      \"identifier\": \"urn:example:agent\",\n      \"displayName\": \"Agent\",\n      \"type\": \"application/json\",\n      \"url\": \"https://example.com/agent.json\"\n    }\n  ]\n}\n",
+      "sourceUrl": "https://github.com/Agent-Card/ai-catalog-rust/blob/920ef70e1e5a602e142137f9ea6a1135fedbf110/fixtures/discoverable.json",
+      "rust": {
+        "entries": [
+          {
+            "data_json": null,
+            "identifier": "urn:example:agent",
+            "type": "application/json",
+            "url": "https://example.com/agent.json"
+          }
+        ],
+        "parse_ok": true,
+        "parse_slice_equivalent": true,
+        "roundtrip_json": "{\"specVersion\":\"1.0\",\"host\":{\"displayName\":\"Example Host\"},\"entries\":[{\"identifier\":\"urn:example:agent\",\"displayName\":\"Agent\",\"type\":\"application/json\",\"url\":\"https://example.com/agent.json\"}]}",
+        "second_roundtrip_equal": true,
+        "spec_version": "1.0"
+      }
+    },
+    {
+      "name": "rust-fixture-catalog",
+      "source": "{\n  \"specVersion\": \"1.0\",\n  \"host\": {\n    \"displayName\": \"Acme Corp\",\n    \"identifier\": \"did:example:org-acme-corp\",\n    \"documentationUrl\": \"https://example.com/docs\"\n  },\n  \"extensions\": {\n    \"com.example.category\": \"demo\",\n    \"https://example.com/extensions/demo\": {\n      \"enabled\": true\n    }\n  },\n  \"entries\": [\n    {\n      \"identifier\": \"urn:example:agent:finance-v1\",\n      \"displayName\": \"Finance Agent\",\n      \"type\": \"application/a2a-agent-card+json\",\n      \"description\": \"Handles financial queries\",\n      \"tags\": [\n        \"finance\",\n        \"banking\"\n      ],\n      \"url\": \"https://example.com/finance.json\",\n      \"publisher\": {\n        \"identifier\": \"did:example:acme\",\n        \"displayName\": \"Acme\"\n      }\n    },\n    {\n      \"identifier\": \"urn:example:data:nlp-corpus\",\n      \"displayName\": \"NLP Corpus\",\n      \"type\": \"application/octet-stream\",\n      \"description\": \"Large language model training data\",\n      \"tags\": [\n        \"nlp\",\n        \"dataset\"\n      ],\n      \"url\": \"https://example.com/nlp.bin\",\n      \"publisher\": {\n        \"identifier\": \"did:example:acme\",\n        \"displayName\": \"Acme\"\n      }\n    },\n    {\n      \"identifier\": \"urn:example:model:embedding-v2\",\n      \"type\": \"application/gguf\",\n      \"url\": \"https://example.com/embed.gguf\",\n      \"publisher\": {\n        \"identifier\": \"did:example:other\",\n        \"displayName\": \"Other\"\n      }\n    },\n    {\n      \"identifier\": \"urn:example:mcp:weather\",\n      \"displayName\": \"Weather\",\n      \"type\": \"application/mcp-server-card+json\",\n      \"url\": \"https://example.com/weather.json\"\n    },\n    {\n      \"identifier\": \"urn:air:acme.com:agent:finance\",\n      \"version\": \"2.0.0\",\n      \"type\": \"application/a2a-agent-card+json\",\n      \"url\": \"https://example.com/finance/2.0.0.json\",\n      \"updatedAt\": \"2026-01-20T08:00:00Z\"\n    },\n    {\n      \"identifier\": \"urn:air:acme.com:agent:finance\",\n      \"version\": \"2.1.0\",\n      \"type\": \"application/a2a-agent-card+json\",\n      \"url\": \"https://example.com/finance/2.1.0.json\",\n      \"updatedAt\": \"2026-03-15T10:00:00Z\"\n    },\n    {\n      \"identifier\": \"urn:air:acme.com:agent:finance\",\n      \"version\": \"2.0.1\",\n      \"type\": \"application/a2a-agent-card+json\",\n      \"url\": \"https://example.com/finance/2.0.1.json\",\n      \"updatedAt\": \"2026-02-01T08:00:00Z\"\n    },\n    {\n      \"identifier\": \"urn:example:model:tagged\",\n      \"version\": \"1.0.0\",\n      \"type\": \"application/octet-stream\",\n      \"url\": \"https://example.com/tagged/semver.bin\",\n      \"updatedAt\": \"2026-01-01T00:00:00Z\"\n    },\n    {\n      \"identifier\": \"urn:example:model:tagged\",\n      \"version\": \"latest\",\n      \"type\": \"application/octet-stream\",\n      \"url\": \"https://example.com/tagged/latest.bin\",\n      \"updatedAt\": \"2026-09-01T00:00:00Z\"\n    },\n    {\n      \"identifier\": \"urn:air:acme.com:mcp:trusted\",\n      \"displayName\": \"Trusted Service\",\n      \"type\": \"application/mcp-server-card+json\",\n      \"url\": \"https://example.com/trusted.json\",\n      \"digest\": \"sha256:9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08\",\n      \"trustManifests\": [\n        {\n          \"contributor\": \"did:web:acme.com\",\n          \"subject\": {\n            \"identifier\": \"urn:air:acme.com:mcp:trusted\",\n            \"type\": \"application/mcp-server-card+json\",\n            \"digest\": \"sha256:9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08\"\n          },\n          \"signature\": {\n            \"signer\": \"did:web:acme.com\",\n            \"profile\": \"did-web-v1\",\n            \"issuedAt\": \"2026-03-15T10:00:00Z\",\n            \"expiresAt\": \"2126-03-15T10:00:00Z\",\n            \"jws\": \"eyJhbGciOiJFUzI1NiIsImtpZCI6ImRpZDp3ZWI6YWNtZS5jb20ja2V5LTEiLCJ0eXAiOiJhaS1jYXRhbG9nLXRydXN0LW1hbmlmZXN0K2p3cyJ9..c2lnbmF0dXJlLXBsYWNlaG9sZGVy\"\n          }\n        }\n      ]\n    },\n    {\n      \"identifier\": \"urn:example:catalog:child\",\n      \"displayName\": \"Child Catalog\",\n      \"type\": \"application/ai-catalog+json\",\n      \"data\": {\n        \"specVersion\": \"1.0\",\n        \"entries\": [\n          {\n            \"identifier\": \"urn:example:child:leaf\",\n            \"displayName\": \"Leaf\",\n            \"type\": \"application/json\",\n            \"url\": \"https://example.com/leaf.json\"\n          }\n        ]\n      }\n    }\n  ]\n}\n",
+      "sourceUrl": "https://github.com/Agent-Card/ai-catalog-rust/blob/920ef70e1e5a602e142137f9ea6a1135fedbf110/fixtures/catalog.json",
+      "rust": {
+        "entries": [
+          {
+            "data_json": null,
+            "identifier": "urn:example:agent:finance-v1",
+            "type": "application/a2a-agent-card+json",
+            "url": "https://example.com/finance.json"
+          },
+          {
+            "data_json": null,
+            "identifier": "urn:example:data:nlp-corpus",
+            "type": "application/octet-stream",
+            "url": "https://example.com/nlp.bin"
+          },
+          {
+            "data_json": null,
+            "identifier": "urn:example:model:embedding-v2",
+            "type": "application/gguf",
+            "url": "https://example.com/embed.gguf"
+          },
+          {
+            "data_json": null,
+            "identifier": "urn:example:mcp:weather",
+            "type": "application/mcp-server-card+json",
+            "url": "https://example.com/weather.json"
+          },
+          {
+            "data_json": null,
+            "identifier": "urn:air:acme.com:agent:finance",
+            "type": "application/a2a-agent-card+json",
+            "url": "https://example.com/finance/2.0.0.json"
+          },
+          {
+            "data_json": null,
+            "identifier": "urn:air:acme.com:agent:finance",
+            "type": "application/a2a-agent-card+json",
+            "url": "https://example.com/finance/2.1.0.json"
+          },
+          {
+            "data_json": null,
+            "identifier": "urn:air:acme.com:agent:finance",
+            "type": "application/a2a-agent-card+json",
+            "url": "https://example.com/finance/2.0.1.json"
+          },
+          {
+            "data_json": null,
+            "identifier": "urn:example:model:tagged",
+            "type": "application/octet-stream",
+            "url": "https://example.com/tagged/semver.bin"
+          },
+          {
+            "data_json": null,
+            "identifier": "urn:example:model:tagged",
+            "type": "application/octet-stream",
+            "url": "https://example.com/tagged/latest.bin"
+          },
+          {
+            "data_json": null,
+            "identifier": "urn:air:acme.com:mcp:trusted",
+            "type": "application/mcp-server-card+json",
+            "url": "https://example.com/trusted.json"
+          },
+          {
+            "data_json": "{\"entries\":[{\"displayName\":\"Leaf\",\"identifier\":\"urn:example:child:leaf\",\"type\":\"application/json\",\"url\":\"https://example.com/leaf.json\"}],\"specVersion\":\"1.0\"}",
+            "identifier": "urn:example:catalog:child",
+            "type": "application/ai-catalog+json",
+            "url": null
+          }
+        ],
+        "parse_ok": true,
+        "parse_slice_equivalent": true,
+        "roundtrip_json": "{\"specVersion\":\"1.0\",\"host\":{\"displayName\":\"Acme Corp\",\"identifier\":\"did:example:org-acme-corp\",\"documentationUrl\":\"https://example.com/docs\"},\"entries\":[{\"identifier\":\"urn:example:agent:finance-v1\",\"displayName\":\"Finance Agent\",\"type\":\"application/a2a-agent-card+json\",\"url\":\"https://example.com/finance.json\",\"description\":\"Handles financial queries\",\"tags\":[\"finance\",\"banking\"],\"publisher\":{\"identifier\":\"did:example:acme\",\"displayName\":\"Acme\"}},{\"identifier\":\"urn:example:data:nlp-corpus\",\"displayName\":\"NLP Corpus\",\"type\":\"application/octet-stream\",\"url\":\"https://example.com/nlp.bin\",\"description\":\"Large language model training data\",\"tags\":[\"nlp\",\"dataset\"],\"publisher\":{\"identifier\":\"did:example:acme\",\"displayName\":\"Acme\"}},{\"identifier\":\"urn:example:model:embedding-v2\",\"type\":\"application/gguf\",\"url\":\"https://example.com/embed.gguf\",\"publisher\":{\"identifier\":\"did:example:other\",\"displayName\":\"Other\"}},{\"identifier\":\"urn:example:mcp:weather\",\"displayName\":\"Weather\",\"type\":\"application/mcp-server-card+json\",\"url\":\"https://example.com/weather.json\"},{\"identifier\":\"urn:air:acme.com:agent:finance\",\"type\":\"application/a2a-agent-card+json\",\"url\":\"https://example.com/finance/2.0.0.json\",\"version\":\"2.0.0\",\"updatedAt\":\"2026-01-20T08:00:00Z\"},{\"identifier\":\"urn:air:acme.com:agent:finance\",\"type\":\"application/a2a-agent-card+json\",\"url\":\"https://example.com/finance/2.1.0.json\",\"version\":\"2.1.0\",\"updatedAt\":\"2026-03-15T10:00:00Z\"},{\"identifier\":\"urn:air:acme.com:agent:finance\",\"type\":\"application/a2a-agent-card+json\",\"url\":\"https://example.com/finance/2.0.1.json\",\"version\":\"2.0.1\",\"updatedAt\":\"2026-02-01T08:00:00Z\"},{\"identifier\":\"urn:example:model:tagged\",\"type\":\"application/octet-stream\",\"url\":\"https://example.com/tagged/semver.bin\",\"version\":\"1.0.0\",\"updatedAt\":\"2026-01-01T00:00:00Z\"},{\"identifier\":\"urn:example:model:tagged\",\"type\":\"application/octet-stream\",\"url\":\"https://example.com/tagged/latest.bin\",\"version\":\"latest\",\"updatedAt\":\"2026-09-01T00:00:00Z\"},{\"identifier\":\"urn:air:acme.com:mcp:trusted\",\"displayName\":\"Trusted Service\",\"type\":\"application/mcp-server-card+json\",\"url\":\"https://example.com/trusted.json\",\"digest\":\"sha256:9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08\",\"trustManifests\":[{\"contributor\":\"did:web:acme.com\",\"subject\":{\"identifier\":\"urn:air:acme.com:mcp:trusted\",\"type\":\"application/mcp-server-card+json\",\"digest\":\"sha256:9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08\"},\"signature\":{\"signer\":\"did:web:acme.com\",\"profile\":\"did-web-v1\",\"issuedAt\":\"2026-03-15T10:00:00Z\",\"expiresAt\":\"2126-03-15T10:00:00Z\",\"jws\":\"eyJhbGciOiJFUzI1NiIsImtpZCI6ImRpZDp3ZWI6YWNtZS5jb20ja2V5LTEiLCJ0eXAiOiJhaS1jYXRhbG9nLXRydXN0LW1hbmlmZXN0K2p3cyJ9..c2lnbmF0dXJlLXBsYWNlaG9sZGVy\"}}]},{\"identifier\":\"urn:example:catalog:child\",\"displayName\":\"Child Catalog\",\"type\":\"application/ai-catalog+json\",\"data\":{\"entries\":[{\"displayName\":\"Leaf\",\"identifier\":\"urn:example:child:leaf\",\"type\":\"application/json\",\"url\":\"https://example.com/leaf.json\"}],\"specVersion\":\"1.0\"}}],\"extensions\":{\"com.example.category\":\"demo\",\"https://example.com/extensions/demo\":{\"enabled\":true}}}",
+        "second_roundtrip_equal": true,
+        "spec_version": "1.0"
+      }
+    }
+  ]
+}

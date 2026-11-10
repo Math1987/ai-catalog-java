@@ -1,0 +1,179 @@
+{
+  "specRevision": "9aac2c1bfa622356e45a31f3dc1d342bdb329e00",
+  "stage": "core-envelope parsing, not full conformance or verification",
+  "policy": "Duplicate keys are rejected globally; only specification major 1 is supported.",
+  "cases": [
+    {
+      "name": "empty catalog",
+      "json": "{\"specVersion\":\"1.0\",\"entries\":[]}",
+      "accepted": true
+    },
+    {
+      "name": "higher minor",
+      "json": "{\"specVersion\":\"1.99\",\"entries\":[]}",
+      "accepted": true
+    },
+    {
+      "name": "local identifier and custom type",
+      "json": "{\"specVersion\":\"1.0\",\"entries\":[{\"identifier\":\"local\",\"type\":\"custom\",\"data\":null}]}",
+      "accepted": true
+    },
+    {
+      "name": "relative URL",
+      "json": "{\"specVersion\":\"1.0\",\"entries\":[{\"identifier\":\"x\",\"type\":\"custom\",\"url\":\"./artifact.json\"}]}",
+      "accepted": true
+    },
+    {
+      "name": "missing entries",
+      "json": "{\"specVersion\":\"1.0\"}",
+      "accepted": false,
+      "code": "INVALID_STRUCTURE",
+      "pointer": "/entries"
+    },
+    {
+      "name": "null entries",
+      "json": "{\"specVersion\":\"1.0\",\"entries\":null}",
+      "accepted": false,
+      "code": "INVALID_STRUCTURE",
+      "pointer": "/entries"
+    },
+    {
+      "name": "entries object",
+      "json": "{\"specVersion\":\"1.0\",\"entries\":{}}",
+      "accepted": false,
+      "code": "INVALID_STRUCTURE",
+      "pointer": "/entries"
+    },
+    {
+      "name": "root array",
+      "json": "[]",
+      "accepted": false,
+      "code": "INVALID_STRUCTURE",
+      "pointer": ""
+    },
+    {
+      "name": "root null",
+      "json": "null",
+      "accepted": false,
+      "code": "INVALID_STRUCTURE",
+      "pointer": ""
+    },
+    {
+      "name": "missing version",
+      "json": "{\"entries\":[]}",
+      "accepted": false,
+      "code": "INVALID_STRUCTURE",
+      "pointer": "/specVersion"
+    },
+    {
+      "name": "numeric version",
+      "json": "{\"specVersion\":1,\"entries\":[]}",
+      "accepted": false,
+      "code": "INVALID_STRUCTURE",
+      "pointer": "/specVersion"
+    },
+    {
+      "name": "malformed version",
+      "json": "{\"specVersion\":\"1\",\"entries\":[]}",
+      "accepted": false,
+      "code": "INVALID_STRUCTURE",
+      "pointer": "/specVersion"
+    },
+    {
+      "name": "unsupported major",
+      "json": "{\"specVersion\":\"2.0\",\"entries\":[]}",
+      "accepted": false,
+      "code": "UNSUPPORTED_SPEC_VERSION",
+      "pointer": "/specVersion"
+    },
+    {
+      "name": "entry null",
+      "json": "{\"specVersion\":\"1.0\",\"entries\":[null]}",
+      "accepted": false,
+      "code": "INVALID_STRUCTURE",
+      "pointer": "/entries/0"
+    },
+    {
+      "name": "missing identifier",
+      "json": "{\"specVersion\": \"1.0\", \"entries\": [{\"type\": \"custom\", \"data\": {}}]}",
+      "accepted": false,
+      "code": "INVALID_STRUCTURE",
+      "pointer": "/entries/0/identifier"
+    },
+    {
+      "name": "missing type",
+      "json": "{\"specVersion\": \"1.0\", \"entries\": [{\"identifier\": \"x\", \"data\": {}}]}",
+      "accepted": false,
+      "code": "INVALID_STRUCTURE",
+      "pointer": "/entries/0/type"
+    },
+    {
+      "name": "null URL",
+      "json": "{\"specVersion\":\"1.0\",\"entries\":[{\"identifier\":\"x\",\"type\":\"custom\",\"url\":null}]}",
+      "accepted": false,
+      "code": "INVALID_STRUCTURE",
+      "pointer": "/entries/0/url"
+    },
+    {
+      "name": "both URL and null data",
+      "json": "{\"specVersion\":\"1.0\",\"entries\":[{\"identifier\":\"x\",\"type\":\"custom\",\"url\":\"https://example.com\",\"data\":null}]}",
+      "accepted": false,
+      "code": "INVALID_STRUCTURE",
+      "pointer": "/entries/0"
+    },
+    {
+      "name": "neither source",
+      "json": "{\"specVersion\":\"1.0\",\"entries\":[{\"identifier\":\"x\",\"type\":\"custom\"}]}",
+      "accepted": false,
+      "code": "INVALID_STRUCTURE",
+      "pointer": "/entries/0"
+    },
+    {
+      "name": "duplicate root member",
+      "json": "{\"specVersion\":\"1.0\",\"entries\":[],\"entries\":[]}",
+      "accepted": false,
+      "code": "INVALID_JSON",
+      "pointer": ""
+    },
+    {
+      "name": "duplicate nested unknown member",
+      "json": "{\"specVersion\":\"1.0\",\"entries\":[],\"future\":{\"x\":1,\"x\":2}}",
+      "accepted": false,
+      "code": "INVALID_JSON",
+      "pointer": ""
+    },
+    {
+      "name": "trailing document",
+      "json": "{\"specVersion\":\"1.0\",\"entries\":[]} {}",
+      "accepted": false,
+      "code": "INVALID_JSON",
+      "pointer": ""
+    },
+    {
+      "name": "comment",
+      "json": "/* comment */{\"specVersion\":\"1.0\",\"entries\":[]}",
+      "accepted": false,
+      "code": "INVALID_JSON",
+      "pointer": ""
+    },
+    {
+      "name": "empty input",
+      "json": "",
+      "accepted": false,
+      "code": "INVALID_JSON",
+      "pointer": ""
+    },
+    {
+      "name": "malformed input",
+      "json": "{\"specVersion\":",
+      "accepted": false,
+      "code": "INVALID_JSON",
+      "pointer": ""
+    },
+    {
+      "name": "optional metadata retained without validation",
+      "json": "{\"specVersion\":\"1.0\",\"entries\":[{\"identifier\":\"x\",\"type\":\"custom\",\"data\":{},\"trustManifests\":\"not validated by this API\"}]}",
+      "accepted": true
+    }
+  ]
+}

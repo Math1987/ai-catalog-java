@@ -1,0 +1,22 @@
+{
+  "specVersion": "1.0",
+  "host": {"displayName": "Example", "futureHost": null},
+  "futureRoot": {"integer": 9007199254740993, "decimal": 1.234567890123456789},
+  "signature": {"jws": "opaque", "issuedAt": "2026-11-10T01:00:00+01:00"},
+  "additionalSignatures": null,
+  "entries": [{
+    "identifier": "urn:air:example.com:agent:example",
+    "type": "application/a2a-agent-card+json",
+    "data": null,
+    "tags": [],
+    "extensions": {},
+    "publisher": {"identifier": "example.com", "displayName": "Example", "future": []},
+    "trustManifests": [{
+      "contributor": "did:web:example.com",
+      "signature": {"jws": "nested", "futureSignature": null},
+      "additionalSignatures": {"anything": true},
+      "futureManifest": [null, {}, []]
+    }],
+    "futureEntry": {"@class": "java.lang.Runtime", "label": "café 🌍"}
+  }]
+}
